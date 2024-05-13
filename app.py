@@ -223,7 +223,7 @@ def display_registered_users():
             if user[4] != None:
                 dob_date = user[4].strftime("%d %b %y")
             else:
-                dob_date = "<NA>"
+                dob_date = ""
                 
             if user[2] == 0:
                 phone_number = ""
