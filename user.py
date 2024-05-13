@@ -81,7 +81,7 @@ conn = mysql.connector.connect(
 )
 
 cursor = conn.cursor()
-st.set_page_config(page_title='Inch By Inch', page_icon='💪', layout="wide")
+st.set_page_config(page_title='44 Fitness Center', page_icon='💪', layout="wide")
 
 st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
@@ -98,7 +98,7 @@ st.markdown("""<style>
 
 def entry():
     with st.form("entry", clear_on_submit=True):
-        st.title('Welcome to INCH By INCH')
+        st.title('Welcome to 44 FITNESS CENTER')
         phone = st.text_input('Enter your Phone Number')
         submit = st.form_submit_button(
             label="Submit", use_container_width=True)
