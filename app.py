@@ -122,22 +122,20 @@ def create_new_user():
 
         if submit:
             if first_name == "":
-                first_name = " "
+                return st.error("First Name Required!")
             if last_name == "":
                 last_name = " "
             if phone == "":
-                phone = ""
+                return st.error("Phone Number Required!")
             if emergency_phone == "":
-                emergency_phone = ""
+                emergency_phone = 0
             if house_no == "":
                 house_no = "<NA>"
             if sector == "":
                 sector = "<NA>"
             if city == "":
                 city = "<NA>"
-            if selected_date == "":
-                selected_date = ""
-
+        
             existing_query = "SELECT * FROM members WHERE Phone = %s"
             cursor.execute(existing_query, (phone,))
             existing_user = cursor.fetchone()
