@@ -121,8 +121,8 @@ def create_new_user():
         submit = st.form_submit_button(label="Register", use_container_width=True)
 
         if submit:
-            if first_name == "" or last_name == "" or phone == "" or emergency_phone == "" or house_no == "" or sector == "" or city == "" or selected_date == "":
-                st.warning('All fields are required!')
+            if first_name == "" or phone == "":
+                st.warning('First Name and Phone Number is Required!')
                 return
             existing_query = "SELECT * FROM members WHERE Phone = %s"
             cursor.execute(existing_query, (phone,))
