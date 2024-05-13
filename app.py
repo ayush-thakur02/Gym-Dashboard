@@ -225,11 +225,11 @@ def display_registered_users():
                 dob_date = "N/A"
             else:
                 dob_date = "N/A"
-            query = "SELECT SUM(Money) FROM payments WHERE Phone = %s"
-            cursor.execute(query, (user[2],))
-            total_amount_paid = cursor.fetchone()[0]
-            table_data.append({'Name': user[1], 'Phone': user[2], 'Emergency': user[3],
-                              'DOB': dob_date, 'Payments': total_amount_paid, 'Address': user[5]})
+                query = "SELECT SUM(Money) FROM payments WHERE Phone = %s"
+                cursor.execute(query, (user[2],))
+                total_amount_paid = cursor.fetchone()[0]
+                table_data.append({'Name': user[1], 'Phone': user[2], 'Emergency': user[3],
+                                  'DOB': dob_date, 'Payments': total_amount_paid, 'Address': user[5]})
         st.table(table_data)
 
 def display_payments():
