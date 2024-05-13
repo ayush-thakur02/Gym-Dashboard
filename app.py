@@ -225,13 +225,13 @@ def display_registered_users():
             else:
                 dob_date = "<NA>"
                 
-            if user[2] == None:
-                phone_number = "<NA>"
+            if user[2] == 0:
+                phone_number = ""
             else:
                 phone_number = user[2]
                 
-            if user[3] == None:
-                emergency_phone_number = "<NA>"
+            if user[3] == 0:
+                emergency_phone_number = ""
             else:
                 emergency_phone_number = user[3]
                 
