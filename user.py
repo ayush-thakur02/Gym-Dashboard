@@ -68,15 +68,10 @@ def layout(*args):
 
 def footer():
     myargs = [
-        "Made with ❤️ by ",
+        "Made By ",
         link("https://www.linkedin.com/in/ayush-thakur02/", "@AyushThakur"),
-        # br(),
-        # link("https://buymeacoffee.com/chrischross", image('https://i.imgur.com/thJhzOO.png')),
     ]
     layout(*myargs)
-
-
-# Connect to MySQL
 
 conn = mysql.connector.connect(
     host=st.secrets["db_host"],
@@ -85,9 +80,8 @@ conn = mysql.connector.connect(
     database=st.secrets["db_name"]
 )
 
-
 cursor = conn.cursor()
-st.set_page_config(page_title='Inch By Inch', page_icon='💪')
+st.set_page_config(page_title='Inch By Inch', page_icon='💪', layout="wide")
 
 st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
@@ -97,22 +91,6 @@ st.markdown("""<style>
   font-weight: 400;
   font-style: normal;
 }
-
-body{
-    height: 100vh;
-    overflow: hidden;
-}
-            
-[data-testid="stAppViewBlockContainer"] {
- overflow: hidden;
-}
-            
-[data-testid="stForm"] {
-    padding-top: 20px;
-    padding-left: 20px;
-    padding-right: 20px;
-    padding-bottom: 40px;
-} 
 
 </style>
 """, unsafe_allow_html=True)
@@ -144,7 +122,7 @@ def entry():
                     return
 
                 if latest_payment:
-                    if len(latest_payment) == 6:  # Ensure there are enough elements in the tuple
+                    if len(latest_payment) == 6: 
                         payment_amount = latest_payment[5]
                         payment_date = latest_payment[2]
 
