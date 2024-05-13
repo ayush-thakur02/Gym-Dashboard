@@ -93,7 +93,7 @@ st.markdown("""<style>
 """, unsafe_allow_html=True)
 
 def create_new_user():
-    with st.form("registration_form", clear_on_submit=False):
+    with st.form("registration_form", clear_on_submit=True):
         st.title('User Registration')
 
         s1, s2 = st.columns(2)
@@ -121,9 +121,23 @@ def create_new_user():
         submit = st.form_submit_button(label="Register", use_container_width=True)
 
         if submit:
-            if first_name == "" or phone == "":
-                st.warning('First Name and Phone Number is Required!')
-                return
+            if first_name == "":
+                first_name = " "
+            if last_name == "":
+                last_name = " "
+            if phone == "":
+                phone = "0"
+            if emergency_phone == "":
+                emergency_phone = "0"
+            if house_no == "":
+                house_no = "N/A"
+            if sector == "":
+                sector = "N/A"
+            if city == "":
+                city = " "
+            if selected_date == "":
+                selected_date = date.today()
+
             existing_query = "SELECT * FROM members WHERE Phone = %s"
             cursor.execute(existing_query, (phone,))
             existing_user = cursor.fetchone()
