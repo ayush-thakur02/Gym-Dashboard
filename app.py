@@ -93,7 +93,7 @@ st.markdown("""<style>
 """, unsafe_allow_html=True)
 
 def create_new_user():
-    with st.form("registration_form", clear_on_submit=True):
+    with st.form("registration_form", clear_on_submit=False):
         st.title('User Registration')
 
         s1, s2 = st.columns(2)
