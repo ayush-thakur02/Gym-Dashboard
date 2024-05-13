@@ -5,7 +5,7 @@ from datetime import date
 from htbuilder import HtmlElement, div, ul, li, br, hr, a, p, img, styles, classes, fonts
 from htbuilder.units import percent, px
 from htbuilder.funcs import rgba, rgb
-
+from pytz import timezone
 
 def image(src_as_string, **style):
     return img(src=src_as_string, style=styles(**style))
@@ -22,6 +22,7 @@ def layout(*args):
       # MainMenu {visibility: hidden;}
       footer {visibility: hidden;}
      .stApp { bottom: 105px; }
+     a{text-decoration: none;}
     </style>
     """
 
@@ -68,8 +69,7 @@ def layout(*args):
 
 def footer():
     myargs = [
-        "Made By ",
-        link("https://www.linkedin.com/in/ayush-thakur02/", "@AyushThakur"),
+        link("https://www.linkedin.com/in/ayush-thakur02/", "Made By @AyushThakur"),
     ]
     layout(*myargs)
 
@@ -177,7 +177,7 @@ def entry():
                 st.error('User not found. Please register first.')
                 return
 
-            current_time = datetime.datetime.now().strftime("%H:%M:%S")
+            current_time = datetime.datetime.now(timezone("Asia/Kolkata")).strftime("%H:%M:%S")
 
             insert_query = "INSERT INTO daily_entry (Name, Phone, Date, Time) VALUES (%s, %s, %s, %s)"
             cursor.execute(insert_query, (name, phone,
@@ -186,12 +186,9 @@ def entry():
             st.success(
                 f'Welcome {name}! You have successfully checked in at {current_time} on {today_date}.')
 
-
 entry()
 
 footer()
 
-
-# Close MySQL connection
 cursor.close()
 conn.close()
