@@ -126,17 +126,17 @@ def create_new_user():
             if last_name == "":
                 last_name = " "
             if phone == "":
-                phone = "0"
+                phone = ""
             if emergency_phone == "":
-                emergency_phone = "0"
+                emergency_phone = ""
             if house_no == "":
-                house_no = "N/A"
+                house_no = "<NA>"
             if sector == "":
-                sector = "N/A"
+                sector = "<NA>"
             if city == "":
-                city = " "
+                city = "<NA>"
             if selected_date == "":
-                selected_date = date.today()
+                selected_date = ""
 
             existing_query = "SELECT * FROM members WHERE Phone = %s"
             cursor.execute(existing_query, (phone,))
@@ -219,14 +219,22 @@ def display_registered_users():
     else:
         table_data = []
         for user in users:
+            
             if user[4] != None:
                 dob_date = user[4].strftime("%d %b %y")
             else:
-                dob_date = "N/A"
+                dob_date = "<NA>"
+                
+            if user[2] == None:
+                phone_number = "<NA>"
+                
+            if user[3] == None:
+                emergency_phone_number = "<NA>
+                
             query = "SELECT SUM(Money) FROM payments WHERE Phone = %s"
             cursor.execute(query, (user[2],))
             total_amount_paid = cursor.fetchone()[0]
-            table_data.append({'Name': user[1], 'Phone': user[2], 'Emergency': user[3],
+            table_data.append({'Name': user[1], 'Phone': phone_number, 'Emergency': emergency_phone_number,
                               'DOB': dob_date, 'Payments': total_amount_paid, 'Address': user[5]})
         st.table(table_data)
 
