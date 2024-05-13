@@ -221,8 +221,10 @@ def display_registered_users():
         for user in users:
             if dob_date != None:
                 dob_date = user[4].strftime("%d %b %y")
+            elif dob_date == "":
+                dob_date = "N/A"
             else:
-                dob_date = " "
+                dob_date = "N/A"
             query = "SELECT SUM(Money) FROM payments WHERE Phone = %s"
             cursor.execute(query, (user[2],))
             total_amount_paid = cursor.fetchone()[0]
