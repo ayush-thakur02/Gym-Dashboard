@@ -80,7 +80,7 @@ conn = mysql.connector.connect(
 )
 
 cursor = conn.cursor()
-st.set_page_config(page_title='Inch By Inch', page_icon='💪', layout='wide')
+st.set_page_config(page_title='44 Fitness Center', page_icon='💪', layout='wide')
 st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
             
@@ -94,7 +94,7 @@ st.markdown("""<style>
 
 def create_new_user():
     with st.form("registration_form", clear_on_submit=True):
-        st.title('User Registration Form')
+        st.title('User Registration')
 
         s1, s2 = st.columns(2)
         with s1:
@@ -143,7 +143,7 @@ def create_new_user():
 
 def create_new_payments():
     with st.form("payment_form", clear_on_submit=True):
-        st.title('Payment Form')
+        st.title('New Payment')
 
         s1, s2 = st.columns(2)
         with s1:
@@ -194,7 +194,7 @@ def create_new_payments():
                 f'Payment Submitted Successfully! For {name} of {amount} on {payment_date} via {mode}.')
 
 def display_registered_users():
-    st.title('Registered Members')
+    st.title('View Members')
     search = st.text_input('Search by Name or Phone')
     query = "SELECT * FROM members WHERE Name LIKE %s OR Phone LIKE %s ORDER BY ID DESC"
     cursor.execute(query, (f"%{search}%", f"%{search}%"))
@@ -214,7 +214,7 @@ def display_registered_users():
         st.table(table_data)
 
 def display_payments():
-    st.title('Payments')
+    st.title('View Payments')
     search = st.text_input('Search by Name or Phone')
     query = "SELECT * FROM payments WHERE Name LIKE %s OR Phone LIKE %s ORDER BY ID DESC"
     cursor.execute(query, (f"%{search}%", f"%{search}%"))
