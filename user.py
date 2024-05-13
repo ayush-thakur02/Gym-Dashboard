@@ -143,7 +143,7 @@ def entry():
                         elif payment_amount == 3000:
                             expiry_date = payment_date + \
                                 datetime.timedelta(days=90)
-                        elif payment_amount == 6000:
+                        elif payment_amount == 5000:
                             expiry_date = payment_date + \
                                 datetime.timedelta(days=180)
                         elif payment_amount == 8000:
