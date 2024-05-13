@@ -219,8 +219,7 @@ def display_registered_users():
     else:
         table_data = []
         for user in users:
-            global dob_date
-            if dob_date != None:
+            if user[4] != None:
                 dob_date = user[4].strftime("%d %b %y")
             else:
                 dob_date = "N/A"
