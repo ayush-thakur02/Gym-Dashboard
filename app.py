@@ -233,7 +233,7 @@ def display_registered_users():
 def display_payments():
     st.title('View Payments')
     search = st.text_input('Search by Name or Phone')
-    query = "SELECT * FROM payments WHERE Name LIKE %s OR Phone LIKE %s ORDER BY ID DESC"
+    query = "SELECT * FROM payments WHERE Name LIKE %s OR Phone LIKE %s ORDER BY Date DESC"
     cursor.execute(query, (f"%{search}%", f"%{search}%"))
     payments = cursor.fetchall()
 
