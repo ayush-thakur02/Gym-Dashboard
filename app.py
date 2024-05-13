@@ -21,6 +21,7 @@ def layout(*args):
       # MainMenu {visibility: hidden;}
       footer {visibility: hidden;}
      .stApp { bottom: 80px; }
+     a{text-decoration: none;}
     </style>
     """
 
@@ -67,10 +68,7 @@ def layout(*args):
 
 def footer():
     myargs = [
-        "Made with ❤️ by ",
-        link("https://www.linkedin.com/in/ayush-thakur02/", "@AyushThakur"),
-        # br(),
-        # link("https://buymeacoffee.com/chrischross", image('https://i.imgur.com/thJhzOO.png')),
+        link("https://www.linkedin.com/in/ayush-thakur02/", "Made By @AyushThakur"),
     ]
     layout(*myargs)
 
@@ -82,8 +80,7 @@ conn = mysql.connector.connect(
 )
 
 cursor = conn.cursor()
-st.set_page_config(page_title='Inch By Inch',
-                   page_icon='💪', layout='wide')
+st.set_page_config(page_title='Inch By Inch', page_icon='💪', layout='wide')
 st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
             
@@ -94,9 +91,6 @@ st.markdown("""<style>
 }
 </style>
 """, unsafe_allow_html=True)
-
-# Create registration form
-
 
 def create_new_user():
     with st.form("registration_form", clear_on_submit=True):
@@ -119,7 +113,7 @@ def create_new_user():
         with a3:
             city = st.text_input('City')
 
-        min_date = date.today().replace(year=date.today().year - 100)  # 100 years ago
+        min_date = date.today().replace(year=date.today().year - 100)
         max_date = date.today()
 
         selected_date = st.date_input(
@@ -127,7 +121,6 @@ def create_new_user():
         submit = st.form_submit_button(label="Register", use_container_width=True)
 
         if submit:
-            # check all feilds are filled
             if first_name == "" or last_name == "" or phone == "" or emergency_phone == "" or house_no == "" or sector == "" or city == "" or selected_date == "":
                 st.warning('All fields are required!')
                 return
@@ -136,8 +129,7 @@ def create_new_user():
             existing_user = cursor.fetchone()
 
             if existing_user:
-                st.error(
-                    'Phone number already exists. Please use a different number.')
+                st.error('Phone number already exists. Please use a different number.')
             else:
                 name = first_name + " " + last_name
                 address = f"House No: {house_no}, Sector: {sector}, {city}"
@@ -201,9 +193,6 @@ def create_new_payments():
             st.success(
                 f'Payment Submitted Successfully! For {name} of {amount} on {payment_date} via {mode}.')
 
-# function to diplay all registered users and a search bar to search for a specific user
-
-
 def display_registered_users():
     st.title('Registered Members')
     search = st.text_input('Search by Name or Phone')
@@ -216,7 +205,6 @@ def display_registered_users():
     else:
         table_data = []
         for user in users:
-            # Format the date as "day month year"
             dob_date = user[4].strftime("%d %b %y")
             query = "SELECT SUM(Money) FROM payments WHERE Phone = %s"
             cursor.execute(query, (user[2],))
@@ -224,9 +212,6 @@ def display_registered_users():
             table_data.append({'Name': user[1], 'Phone': user[2], 'Emergency': user[3],
                               'DOB': dob_date, 'Payments': total_amount_paid, 'Address': user[5]})
         st.table(table_data)
-
-# function to display all payments and a search bar to search for a specific payment
-
 
 def display_payments():
     st.title('Payments')
@@ -246,9 +231,6 @@ def display_payments():
                               'Phone': payment[3], 'Mode': payment[4], 'Amount': payment[5]})
         st.table(table_data)
 
-# function to display all users in the daily_entry table and a search bar to search for a specific user
-
-
 def display_daily_entry():
     st.title('Daily Entry')
 
@@ -259,12 +241,12 @@ def display_daily_entry():
         date_filter = st.date_input(
             'Filter by Date', format="DD/MM/YYYY", min_value=None, max_value=None, value=None)
 
-    query = "SELECT * FROM daily_entry WHERE (Name LIKE %s OR Phone LIKE %s) ORDER BY Sno DESC"
+    query = "SELECT * FROM daily_entry WHERE (Name LIKE %s OR Phone LIKE %s)"
     params = (f"%{search}%", f"%{search}%")
 
     if date_filter:
         query += " AND Date = %s"
-        params += (date_filter,)
+        params += (date_filter.strftime("%Y-%m-%d"),)  # Ensure date is in YYYY-MM-DD format
 
     cursor.execute(query, params)
     daily_entries = cursor.fetchall()
@@ -274,22 +256,18 @@ def display_daily_entry():
     else:
         table_data = []
         for entry in daily_entries:
-            # Format the date as "day month year"
             entry_date = entry[3].strftime("%d %b %y")
-            # Get the total seconds from the timedelta object
             entry_time = entry[4].total_seconds()
-            hours = int(entry_time // 3600)  # Calculate the hours
-            minutes = int((entry_time % 3600) // 60)  # Calculate the minutes
-            seconds = int(entry_time % 60)  # Calculate the seconds
-            # Format the time as "hour:minute:second"
+            hours = int(entry_time // 3600)  
+            minutes = int((entry_time % 3600) // 60)  
+            seconds = int(entry_time % 60) 
             entry_time_formatted = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
             table_data.append(
                 {'Name': entry[1], 'Date': entry_date, 'Time': entry_time_formatted, 'Phone': entry[2]})
         st.table(table_data)
 
 
-page = st.sidebar.selectbox("Choose a page", [
-                            "New Registeration", "New Payment", "View Members", "View Payments", "Daily Entry"])
+page = st.sidebar.selectbox("Choose a page", ["New Registeration", "New Payment", "View Members", "View Payments", "Daily Entry"])
 
 if page:
     if page == "New Registeration":
