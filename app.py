@@ -223,15 +223,15 @@ def display_registered_users():
             if user[4] != None:
                 dob_date = user[4].strftime("%d %b %y")
             else:
-                dob_date = ""
+                dob_date = str("")
                 
             if user[2] == 0:
-                phone_number = ""
+                phone_number = str("")
             else:
                 phone_number = user[2]
                 
             if user[3] == 0:
-                emergency_phone_number = ""
+                emergency_phone_number = str("")
             else:
                 emergency_phone_number = user[3]
                 
