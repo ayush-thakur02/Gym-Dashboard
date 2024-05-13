@@ -227,9 +227,13 @@ def display_registered_users():
                 
             if user[2] == None:
                 phone_number = "<NA>"
+            else:
+                phone_number = user[2]
                 
             if user[3] == None:
                 emergency_phone_number = "<NA>"
+            else:
+                emergency_phone_number = user[3]
                 
             query = "SELECT SUM(Money) FROM payments WHERE Phone = %s"
             cursor.execute(query, (user[2],))
