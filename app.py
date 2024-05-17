@@ -268,7 +268,7 @@ def display_daily_entry():
         date_filter = st.date_input(
             'Filter by Date', format="DD/MM/YYYY", min_value=None, max_value=None, value=None)
 
-    query = "SELECT * FROM daily_entry WHERE (Name LIKE %s OR Phone LIKE %s) ORDER BY Sno DESC"
+    query = "SELECT * FROM daily_entry WHERE Name LIKE %s OR Phone LIKE %s ORDER BY Sno DESC"
     params = (f"%{search}%", f"%{search}%")
 
     if date_filter:
