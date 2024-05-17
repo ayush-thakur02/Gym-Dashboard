@@ -149,6 +149,12 @@ def entry():
                         elif payment_amount == 8000:
                             expiry_date = payment_date + \
                                 datetime.timedelta(days=365)
+                        elif payment_amount == 1200:
+                            expiry_date = payment_date + \
+                                datetime.timedelta(days=30)
+                        elif payment_amount == 3600:
+                            expiry_date = payment_date + \
+                                datetime.timedelta(days=90)
                         today_date = date.today()
                         if today_date > expiry_date:
                             st.error(
