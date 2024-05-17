@@ -272,8 +272,13 @@ def display_daily_entry():
     params = (f"%{search}%", f"%{search}%")
 
     if date_filter:
-        query += " AND Date = %s"
-        params += (date_filter.strftime("%Y-%m-%d"),)  # Ensure date is in YYYY-MM-DD format
+        query = """
+        SELECT * FROM daily_entry 
+        WHERE (Name LIKE %s OR Phone LIKE %s) 
+        AND Date = %s 
+        ORDER BY Sno DESC;
+        """
+        params = (f"%{search}%", f"%{search}%", date_filter.strftime("%Y-%m-%d"))  # Ensure date is in YYYY-MM-DD format
 
     cursor.execute(query, params)
     daily_entries = cursor.fetchall()
