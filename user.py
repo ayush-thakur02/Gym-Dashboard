@@ -155,6 +155,34 @@ def entry():
                         elif payment_amount == 3600:
                             expiry_date = payment_date + \
                                 datetime.timedelta(days=90)
+                        
+                        # Single NEW
+                        elif payment_amount == 2001:
+                            expiry_date = payment_date + \
+                                datetime.timedelta(days=30)
+                        elif payment_amount == 5001:
+                            expiry_date = payment_date + \
+                                datetime.timedelta(days=90)
+                        elif payment_amount == 9001:
+                            expiry_date = payment_date + \
+                                datetime.timedelta(days=180)
+                        elif payment_amount == 15001:
+                            expiry_date = payment_date + \
+                                datetime.timedelta(days=365)
+                        
+                        # Couple New
+                        elif payment_amount == 3501:
+                            expiry_date = payment_date + \
+                                datetime.timedelta(days=30)
+                        elif payment_amount == 8501:
+                            expiry_date = payment_date + \
+                                datetime.timedelta(days=90)
+                        elif payment_amount == 16001:
+                            expiry_date = payment_date + \
+                                datetime.timedelta(days=180)
+                        elif payment_amount == 25001:
+                            expiry_date = payment_date + \
+                                datetime.timedelta(days=365)
                         today_date = date.today()
                         if today_date > expiry_date:
                             st.error(
