@@ -160,7 +160,7 @@ def create_new_payments():
         s1, s2 = st.columns(2)
         with s1:
             phone = st.text_input('Phone')
-            amount = st.selectbox('Amount', [1200, 1500, 3000, 3600, 4000, 5000, 7000, 8000, 12000])
+            amount = st.selectbox('Amount', [2000, 5000, 9000, 15000, 3500, 8500, 16000, 25000])
 
         with s2:
             payment_date = st.date_input(
