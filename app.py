@@ -80,7 +80,7 @@ conn = mysql.connector.connect(
 )
 
 cursor = conn.cursor()
-st.set_page_config(page_title='44 Fitness Center', page_icon='💪', layout='wide')
+st.set_page_config(page_title='Plus Fitness Zone', page_icon='💪', layout='wide')
 st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
             
