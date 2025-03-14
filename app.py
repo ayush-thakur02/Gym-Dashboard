@@ -279,8 +279,9 @@ def edit_user():
                 cursor.execute(update_query, 
                               (name, phone, emergency_phone, selected_date, address, st.session_state.user_id))
                 
-                # Always update the name in payments table, and update phone if it changed
+                # Always update the name in payments and daily_entry tables, and update phone if it changed
                 if name != st.session_state.user_name or phone != str(st.session_state.user_phone):
+                    # Update payments table
                     update_payments_query = """
                     UPDATE payments
                     SET Phone = %s, Name = %s
@@ -288,7 +289,7 @@ def edit_user():
                     """
                     cursor.execute(update_payments_query, (phone, name, st.session_state.user_phone))
                     
-                    # Update related records in daily_entry table
+                    # Update daily_entry table
                     update_daily_entry_query = """
                     UPDATE daily_entry
                     SET Phone = %s, Name = %s
