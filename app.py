@@ -307,8 +307,6 @@ def edit_user():
                         del st.session_state[key]
                 
                 st.success('User details updated successfully!')
-                st.experimental_rerun()
-
 
 def create_new_payments():
     with st.form("payment_form", clear_on_submit=True):
@@ -365,40 +363,54 @@ def create_new_payments():
 def edit_payment():
     st.title('Edit Payment')
     
+    # Initialize session state variables if they don't exist
+    if 'search_phone' not in st.session_state:
+        st.session_state.search_phone = ""
+    if 'search_date' not in st.session_state:
+        st.session_state.search_date = None
+    if 'payments_found' not in st.session_state:
+        st.session_state.payments_found = []
+    if 'payment_displays' not in st.session_state:
+        st.session_state.payment_displays = []
+    if 'payment_ids' not in st.session_state:
+        st.session_state.payment_ids = []
+    
     # Search options
     search_col1, search_col2 = st.columns(2)
     with search_col1:
-        phone_search = st.text_input('Enter Phone Number to Find Payments')
+        phone_search = st.text_input('Enter Phone Number to Find Payments', value=st.session_state.search_phone)
     with search_col2:
-        date_filter = st.date_input('Filter by Date (Optional)', format="DD/MM/YYYY", value=None)
+        date_filter = st.date_input('Filter by Date (Optional)', format="DD/MM/YYYY", value=st.session_state.search_date)
     
     search_button = st.button('Search Payments')
     
-    if search_button and phone_search:
-        # Base query
-        if date_filter:
-            query = """
-            SELECT * FROM payments 
-            WHERE Phone = %s AND Date = %s 
-            ORDER BY Date DESC
-            """
-            cursor.execute(query, (phone_search, date_filter))
-        else:
-            query = """
-            SELECT * FROM payments 
-            WHERE Phone = %s 
-            ORDER BY Date DESC
-            """
-            cursor.execute(query, (phone_search,))
+    # Update search criteria in session state
+    if search_button:
+        st.session_state.search_phone = phone_search
+        st.session_state.search_date = date_filter
         
-        payments = cursor.fetchall()
-        
-        if not payments:
-            st.warning('No payments found for the given criteria.')
-        else:
-            st.subheader("Select a payment to edit:")
+        # Fetch payments based on search criteria
+        if phone_search:
+            # Base query
+            if date_filter:
+                query = """
+                SELECT * FROM payments 
+                WHERE Phone = %s AND Date = %s 
+                ORDER BY Date DESC
+                """
+                cursor.execute(query, (phone_search, date_filter))
+            else:
+                query = """
+                SELECT * FROM payments 
+                WHERE Phone = %s 
+                ORDER BY Date DESC
+                """
+                cursor.execute(query, (phone_search,))
             
-            # Create a list of payments to display in a selectbox
+            payments = cursor.fetchall()
+            st.session_state.payments_found = payments
+            
+            # Create display list for payments
             payment_ids = []
             payment_displays = []
             
@@ -413,47 +425,54 @@ def edit_payment():
                 payment_ids.append(payment_id)
                 payment_displays.append(display_text)
             
+            st.session_state.payment_ids = payment_ids
+            st.session_state.payment_displays = payment_displays
+    
+    # Display search results if available
+    if st.session_state.search_phone and st.session_state.payments_found:
+        if not st.session_state.payments_found:
+            st.warning('No payments found for the given criteria.')
+        else:
+            st.subheader("Select a payment to edit:")
+            
             # Display selectbox with payments
             selected_payment_index = st.selectbox(
                 "Choose payment to edit:",
-                range(len(payment_displays)),
-                format_func=lambda i: payment_displays[i]
+                range(len(st.session_state.payment_displays)),
+                format_func=lambda i: st.session_state.payment_displays[i]
             )
             
             # Get the selected payment details
-            selected_payment_id = payment_ids[selected_payment_index]
-            selected_payment = payments[selected_payment_index]
+            selected_payment_id = st.session_state.payment_ids[selected_payment_index]
+            selected_payment = st.session_state.payments_found[selected_payment_index]
             
-            # Store selected payment in session state
-            st.session_state.payment_id = selected_payment_id
-            st.session_state.payment_name = selected_payment[1]
-            st.session_state.payment_date = selected_payment[2]
-            st.session_state.payment_phone = selected_payment[3]
-            st.session_state.payment_mode = selected_payment[4]
-            st.session_state.payment_amount = selected_payment[5]
+            # Store selected payment details
+            payment_name = selected_payment[1]
+            payment_date = selected_payment[2]
+            payment_phone = selected_payment[3]
+            payment_mode = selected_payment[4]
+            payment_amount = selected_payment[5]
             
             # Display edit form
-            with st.form("edit_payment_form"):
-                st.subheader(f"Edit Payment for {st.session_state.payment_name}")
+            with st.form(f"edit_payment_form_{selected_payment_id}"):
+                st.subheader(f"Edit Payment for {payment_name}")
                 
                 e1, e2 = st.columns(2)
                 with e1:
-                    edit_amount = st.selectbox('Amount', 
-                                              [1500, 4000, 7000, 12000, 3000, 5000, 8000, 1200, 3600, 
-                                               2001, 5001, 9001, 15001, 3501, 8501, 16001, 25001],
-                                              index=[1500, 4000, 7000, 12000, 3000, 5000, 8000, 1200, 3600, 
-                                                    2001, 5001, 9001, 15001, 3501, 8501, 16001, 25001]
-                                                    .index(st.session_state.payment_amount) 
-                                                    if st.session_state.payment_amount in [1500, 4000, 7000, 12000, 3000, 5000, 8000, 1200, 3600, 
-                                                                                       2001, 5001, 9001, 15001, 3501, 8501, 16001, 25001] else 0)
+                    amount_options = [1500, 4000, 7000, 12000, 3000, 5000, 8000, 1200, 3600, 
+                                      2001, 5001, 9001, 15001, 3501, 8501, 16001, 25001]
+                    default_index = amount_options.index(payment_amount) if payment_amount in amount_options else 0
+                    edit_amount = st.selectbox('Amount', amount_options, index=default_index)
                 
                 with e2:
                     min_date = None
                     max_date = date.today()
-                    edit_date = st.date_input('Payment Date', value=st.session_state.payment_date,
-                                           format="DD/MM/YYYY", min_value=min_date, max_value=max_date)
+                    edit_date = st.date_input('Payment Date', value=payment_date,
+                                              format="DD/MM/YYYY", min_value=min_date, max_value=max_date,
+                                              key=f"date_{selected_payment_id}")
                     edit_mode = st.selectbox('Payment Mode', ['UPI', 'Cash'], 
-                                           index=0 if st.session_state.payment_mode == 'UPI' else 1)
+                                            index=0 if payment_mode == 'UPI' else 1,
+                                            key=f"mode_{selected_payment_id}")
                 
                 update_payment_button = st.form_submit_button("Update Payment", use_container_width=True)
                 
@@ -464,20 +483,26 @@ def edit_payment():
                     SET Date = %s, Mode = %s, Money = %s
                     WHERE Sno = %s
                     """
-                    cursor.execute(update_query, (edit_date, edit_mode, edit_amount, st.session_state.payment_id))
+                    cursor.execute(update_query, (edit_date, edit_mode, edit_amount, selected_payment_id))
                     conn.commit()
                     
                     st.success("Payment updated successfully!")
                     
-                    # Clear session state
-                    for key in ['payment_id', 'payment_name', 'payment_date', 
-                               'payment_phone', 'payment_mode', 'payment_amount']:
-                        if key in st.session_state:
-                            del st.session_state[key]
-                    
-                    # Refresh the page
-                    st.experimental_rerun()
-
+                    # Update the payment in session state to reflect changes
+                    for i, payment in enumerate(st.session_state.payments_found):
+                        if payment[0] == selected_payment_id:
+                            updated_payment = list(payment)
+                            updated_payment[2] = edit_date
+                            updated_payment[4] = edit_mode
+                            updated_payment[5] = edit_amount
+                            st.session_state.payments_found[i] = tuple(updated_payment)
+                            
+                            # Update the display text
+                            updated_display = f"{payment_name} - {edit_date.strftime('%d %b %y')} - ₹{edit_amount} via {edit_mode}"
+                            st.session_state.payment_displays[i] = updated_display
+                            break
+    elif st.session_state.search_phone:
+        st.warning('No payments found for the given criteria.')
 
 def display_registered_users():
     st.title('View Members')
@@ -507,11 +532,8 @@ def display_registered_users():
             else:
                 emergency_phone_number = user[3]
                 
-            query = "SELECT SUM(Money) FROM payments WHERE Phone = %s"
-            cursor.execute(query, (user[2],))
-            total_amount_paid = cursor.fetchone()[0]
             table_data.append({'Name': user[1], 'Phone': phone_number, 'Emergency': emergency_phone_number,
-                              'DOB': dob_date, 'Payments': total_amount_paid, 'Address': user[5]})
+                              'DOB': dob_date, 'Address': user[5]})
         st.table(table_data)
 
 
@@ -536,30 +558,64 @@ def display_payments():
 def display_daily_entry():
     st.title('Daily Entry')
 
-    x1, y1 = st.columns(2)
-    with x1:
-        search = st.text_input('Search by Name or Phone')
-    with y1:
-        date_filter = st.date_input(
-            'Filter by Date', format="DD/MM/YYYY", min_value=None, max_value=None, value=None)
+    today = date.today()
+    today_str = today.strftime("%Y-%m-%d")
 
-    query = "SELECT * FROM daily_entry WHERE Name LIKE %s OR Phone LIKE %s ORDER BY Sno DESC"
-    params = (f"%{search}%", f"%{search}%")
-
-    if date_filter:
-        query = """
-        SELECT * FROM daily_entry 
-        WHERE (Name LIKE %s OR Phone LIKE %s) 
-        AND Date = %s 
-        ORDER BY Sno DESC;
-        """
-        params = (f"%{search}%", f"%{search}%", date_filter.strftime("%Y-%m-%d"))
-
-    cursor.execute(query, params)
+    # Query to get today's entries
+    query_today = """
+    SELECT * FROM daily_entry 
+    WHERE Date = %s 
+    ORDER BY Sno DESC;
+    """
+    cursor.execute(query_today, (today_str,))
     daily_entries = cursor.fetchall()
 
+    # Query to get entry counts by hour for today
+    query_hourly = """
+    SELECT HOUR(Time), COUNT(*) 
+    FROM daily_entry 
+    WHERE Date = %s 
+    GROUP BY HOUR(Time) 
+    ORDER BY HOUR(Time);
+    """
+    cursor.execute(query_hourly, (today_str,))
+    hourly_data = cursor.fetchall()
+
+    # Display graph
+    st.subheader(f"Today's Entry Count ({today.strftime('%d %b %Y')})")
+    
+    if not hourly_data:
+        st.info("No entries recorded for today yet.")
+    else:
+        hours = [entry[0] for entry in hourly_data]
+        counts = [entry[1] for entry in hourly_data]
+        
+        # Create a complete hour range from gym opening to current hour
+        current_hour = date.today().hour
+        full_hour_range = list(range(5, min(current_hour + 1, 23)))  # Assuming gym opens at 5 AM
+        complete_counts = [0] * len(full_hour_range)
+        
+        # Fill in the actual counts
+        for i, hour in enumerate(hours):
+            if hour in full_hour_range:
+                idx = full_hour_range.index(hour)
+                complete_counts[idx] = counts[i]
+        
+        # Format hour labels (5 AM, 6 AM, etc.)
+        hour_labels = [f"{h} {'AM' if h < 12 else 'PM'}" for h in full_hour_range]
+        
+        # Plot the line chart
+        chart_data = {"Hour": hour_labels, "Entries": complete_counts}
+        st.line_chart(chart_data, x="Hour", y="Entries", height=300)
+        
+        # Total entries today
+        total_entries = sum(counts)
+        st.metric("Total Entries Today", total_entries)
+
+    # Display today's entries in a table
+    st.subheader("Today's Entry Log")
     if not daily_entries:
-        st.warning('No entries found.')
+        st.warning('No entries found for today.')
     else:
         table_data = []
         for entry in daily_entries:
@@ -570,8 +626,42 @@ def display_daily_entry():
             seconds = int(entry_time % 60) 
             entry_time_formatted = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
             table_data.append(
-                {'Name': entry[1], 'Date': entry_date, 'Time': entry_time_formatted, 'Phone': entry[2]})
+                {'Name': entry[1], 'Time': entry_time_formatted, 'Phone': entry[2]})
         st.table(table_data)
+
+    # Optional: Add a filter section that can be expanded
+    with st.expander("Search Past Entries"):
+        x1, y1 = st.columns(2)
+        with x1:
+            search = st.text_input('Search by Name or Phone')
+        with y1:
+            date_filter = st.date_input(
+                'Filter by Date', format="DD/MM/YYYY", min_value=None, max_value=None, value=today)
+        
+        if search or date_filter != today:
+            query = """
+            SELECT * FROM daily_entry 
+            WHERE (Name LIKE %s OR Phone LIKE %s) 
+            AND Date = %s 
+            ORDER BY Sno DESC;
+            """
+            cursor.execute(query, (f"%{search}%", f"%{search}%", date_filter))
+            filtered_entries = cursor.fetchall()
+            
+            if not filtered_entries:
+                st.warning('No entries found for your search criteria.')
+            else:
+                filter_table_data = []
+                for entry in filtered_entries:
+                    entry_date = entry[3].strftime("%d %b %y")
+                    entry_time = entry[4].total_seconds()
+                    hours = int(entry_time // 3600)  
+                    minutes = int((entry_time % 3600) // 60)  
+                    seconds = int(entry_time % 60) 
+                    entry_time_formatted = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+                    filter_table_data.append(
+                        {'Name': entry[1], 'Date': entry_date, 'Time': entry_time_formatted, 'Phone': entry[2]})
+                st.table(filter_table_data)
 
 
 # Main navigation
