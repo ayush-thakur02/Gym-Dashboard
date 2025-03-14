@@ -555,114 +555,223 @@ def display_payments():
                               'Phone': payment[3], 'Mode': payment[4], 'Amount': payment[5]})
         st.table(table_data)
 
+import pandas as pd
+from datetime import datetime, timedelta
+
 def display_daily_entry():
     st.title('Daily Entry')
 
     today = date.today()
     today_str = today.strftime("%Y-%m-%d")
 
-    # Query to get today's entries
-    query_today = """
-    SELECT * FROM daily_entry 
-    WHERE Date = %s 
-    ORDER BY Sno DESC;
-    """
-    cursor.execute(query_today, (today_str,))
+    # Date filtering options
+    st.subheader("Filter Entries")
+    filter_option = st.radio("Select filter type:", ["Today", "Specific Date", "Month Range"], horizontal=True)
+    
+    if filter_option == "Today":
+        selected_date = today
+        date_filter_str = today_str
+        start_date = today
+        end_date = today
+    elif filter_option == "Specific Date":
+        selected_date = st.date_input("Select date:", value=today, format="DD/MM/YYYY")
+        date_filter_str = selected_date.strftime("%Y-%m-%d")
+        start_date = selected_date
+        end_date = selected_date
+    else:  # Month Range
+        col1, col2 = st.columns(2)
+        with col1:
+            month = st.selectbox("Select month:", range(1, 13), index=today.month-1, format_func=lambda m: date(2000, m, 1).strftime('%B'))
+        with col2:
+            year = st.selectbox("Select year:", range(today.year-5, today.year+1), index=5)
+        
+        start_date = date(year, month, 1)
+        if month == 12:
+            end_date = date(year+1, 1, 1) - pd.Timedelta(days=1)
+        else:
+            end_date = date(year, month+1, 1) - pd.Timedelta(days=1)
+        
+        date_filter_str = start_date.strftime("%Y-%m-%d")
+        selected_date = start_date  # For display purposes
+
+    # Query to get entries for the selected date range
+    if filter_option == "Month Range":
+        query_entries = """
+        SELECT * FROM daily_entry 
+        WHERE Date BETWEEN %s AND %s
+        ORDER BY Date DESC, Sno DESC;
+        """
+        cursor.execute(query_entries, (start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")))
+    else:
+        query_entries = """
+        SELECT * FROM daily_entry 
+        WHERE Date = %s 
+        ORDER BY Sno DESC;
+        """
+        cursor.execute(query_entries, (date_filter_str,))
+    
     daily_entries = cursor.fetchall()
 
-    # Query to get entry counts by hour for today
-    query_hourly = """
-    SELECT HOUR(Time), COUNT(*) 
-    FROM daily_entry 
-    WHERE Date = %s 
-    GROUP BY HOUR(Time) 
-    ORDER BY HOUR(Time);
-    """
-    cursor.execute(query_hourly, (today_str,))
-    hourly_data = cursor.fetchall()
+    # Display entries count graph
+    if filter_option == "Month Range":
+        st.subheader(f"Entry Count for {start_date.strftime('%B %Y')}")
+        
+        # Query to get daily entry counts for the month
+        query_daily = """
+        SELECT Date, COUNT(*) 
+        FROM daily_entry 
+        WHERE Date BETWEEN %s AND %s
+        GROUP BY Date 
+        ORDER BY Date;
+        """
+        cursor.execute(query_daily, (start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")))
+        daily_data = cursor.fetchall()
+        
+        if not daily_data:
+            st.info(f"No entries recorded for {start_date.strftime('%B %Y')}.")
+        else:
+            # Create a complete date range for the month
+            date_range = pd.date_range(start=start_date, end=end_date)
+            complete_counts = {d.strftime('%Y-%m-%d'): 0 for d in date_range}
+            
+            # Fill in actual counts
+            for entry_date, count in daily_data:
+                complete_counts[entry_date.strftime('%Y-%m-%d')] = count
+            
+            # Prepare data for chart
+            chart_data = pd.DataFrame({
+                'Date': [d.strftime('%d %b') for d in date_range],
+                'Entries': list(complete_counts.values())
+            })
+            
+            st.bar_chart(chart_data, x='Date', y='Entries', height=300)
+            
+            # Total entries for the month
+            total_entries = sum(complete_counts.values())
+            st.metric("Total Entries", total_entries)
+    else:
+        # Query to get hourly entry counts for the specific date
+        query_hourly = """
+        SELECT HOUR(Time), COUNT(*) 
+        FROM daily_entry 
+        WHERE Date = %s 
+        GROUP BY HOUR(Time) 
+        ORDER BY HOUR(Time);
+        """
+        cursor.execute(query_hourly, (date_filter_str,))
+        hourly_data = cursor.fetchall()
 
-    # Display graph
-    st.subheader(f"Today's Entry Count ({today.strftime('%d %b %Y')})")
+        st.subheader(f"Entry Count for {selected_date.strftime('%d %b %Y')}")
+        
+        if not hourly_data:
+            st.info(f"No entries recorded for {selected_date.strftime('%d %b %Y')}.")
+        else:
+            hours = [entry[0] for entry in hourly_data]
+            counts = [entry[1] for entry in hourly_data]
+            
+            # Create a complete hour range from gym opening to closing
+            full_hour_range = list(range(5, 23))  # Assuming gym opens at 5 AM and closes at 10 PM
+            complete_counts = [0] * len(full_hour_range)
+            
+            # Fill in the actual counts
+            for i, hour in enumerate(hours):
+                if hour in full_hour_range:
+                    idx = full_hour_range.index(hour)
+                    complete_counts[idx] = counts[i]
+            
+            # Format hour labels (5 AM, 6 AM, etc.)
+            hour_labels = [f"{h} {'AM' if h < 12 else 'PM'}" for h in full_hour_range]
+            
+            # Plot the chart
+            chart_data = pd.DataFrame({
+                "Hour": hour_labels,
+                "Entries": complete_counts
+            })
+            st.bar_chart(chart_data, x="Hour", y="Entries", height=300)
+            
+            # Total entries for the day
+            total_entries = sum(counts)
+            st.metric("Total Entries", total_entries)
+
+    # Graph showing entries from start till now
+    st.subheader("Entry Trend Over Time")
     
-    if not hourly_data:
-        st.info("No entries recorded for today yet.")
+    # Query to get monthly entry counts since the beginning
+    query_monthly_trend = """
+    SELECT DATE_FORMAT(Date, '%Y-%m') as month, COUNT(*) 
+    FROM daily_entry 
+    GROUP BY DATE_FORMAT(Date, '%Y-%m')
+    ORDER BY month;
+    """
+    cursor.execute(query_monthly_trend)
+    monthly_trend_data = cursor.fetchall()
+    
+    if not monthly_trend_data:
+        st.info("No historical entry data available.")
     else:
-        hours = [entry[0] for entry in hourly_data]
-        counts = [entry[1] for entry in hourly_data]
+        months = [entry[0] for entry in monthly_trend_data]
+        monthly_counts = [entry[1] for entry in monthly_trend_data]
         
-        # Create a complete hour range from gym opening to current hour
-        current_hour = date.today().hour
-        full_hour_range = list(range(5, min(current_hour + 1, 23)))  # Assuming gym opens at 5 AM
-        complete_counts = [0] * len(full_hour_range)
+        # Format month labels (Jan 2023, Feb 2023, etc.)
+        month_labels = [datetime.strptime(m, '%Y-%m').strftime('%b %Y') for m in months]
         
-        # Fill in the actual counts
-        for i, hour in enumerate(hours):
-            if hour in full_hour_range:
-                idx = full_hour_range.index(hour)
-                complete_counts[idx] = counts[i]
+        trend_data = pd.DataFrame({
+            "Month": month_labels,
+            "Entries": monthly_counts
+        })
         
-        # Format hour labels (5 AM, 6 AM, etc.)
-        hour_labels = [f"{h} {'AM' if h < 12 else 'PM'}" for h in full_hour_range]
-        
-        # Plot the line chart
-        chart_data = {"Hour": hour_labels, "Entries": complete_counts}
-        st.line_chart(chart_data, x="Hour", y="Entries", height=300)
-        
-        # Total entries today
-        total_entries = sum(counts)
-        st.metric("Total Entries Today", total_entries)
+        st.line_chart(trend_data, x="Month", y="Entries", height=300)
 
-    # Display today's entries in a table
-    st.subheader("Today's Entry Log")
-    if not daily_entries:
-        st.warning('No entries found for today.')
-    else:
-        table_data = []
-        for entry in daily_entries:
-            entry_date = entry[3].strftime("%d %b %y")
-            entry_time = entry[4].total_seconds()
-            hours = int(entry_time // 3600)  
-            minutes = int((entry_time % 3600) // 60)  
-            seconds = int(entry_time % 60) 
-            entry_time_formatted = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
-            table_data.append(
-                {'Name': entry[1], 'Time': entry_time_formatted, 'Phone': entry[2]})
-        st.table(table_data)
-
-    # Optional: Add a filter section that can be expanded
-    with st.expander("Search Past Entries"):
-        x1, y1 = st.columns(2)
-        with x1:
-            search = st.text_input('Search by Name or Phone')
-        with y1:
-            date_filter = st.date_input(
-                'Filter by Date', format="DD/MM/YYYY", min_value=None, max_value=None, value=today)
-        
-        if search or date_filter != today:
+    # Display entries in a table
+    st.subheader(f"Entry Log for {start_date.strftime('%d %b %Y')}" + 
+                (f" to {end_date.strftime('%d %b %Y')}" if filter_option == "Month Range" else ""))
+    
+    # Add search filter within selected date range
+    search = st.text_input('Search by Name or Phone')
+    
+    if search:
+        if filter_option == "Month Range":
+            query = """
+            SELECT * FROM daily_entry 
+            WHERE (Name LIKE %s OR Phone LIKE %s) 
+            AND Date BETWEEN %s AND %s
+            ORDER BY Date DESC, Sno DESC;
+            """
+            cursor.execute(query, (f"%{search}%", f"%{search}%", 
+                                  start_date.strftime("%Y-%m-%d"), 
+                                  end_date.strftime("%Y-%m-%d")))
+        else:
             query = """
             SELECT * FROM daily_entry 
             WHERE (Name LIKE %s OR Phone LIKE %s) 
             AND Date = %s 
             ORDER BY Sno DESC;
             """
-            cursor.execute(query, (f"%{search}%", f"%{search}%", date_filter))
-            filtered_entries = cursor.fetchall()
-            
-            if not filtered_entries:
-                st.warning('No entries found for your search criteria.')
-            else:
-                filter_table_data = []
-                for entry in filtered_entries:
-                    entry_date = entry[3].strftime("%d %b %y")
-                    entry_time = entry[4].total_seconds()
-                    hours = int(entry_time // 3600)  
-                    minutes = int((entry_time % 3600) // 60)  
-                    seconds = int(entry_time % 60) 
-                    entry_time_formatted = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
-                    filter_table_data.append(
-                        {'Name': entry[1], 'Date': entry_date, 'Time': entry_time_formatted, 'Phone': entry[2]})
-                st.table(filter_table_data)
-
+            cursor.execute(query, (f"%{search}%", f"%{search}%", date_filter_str))
+        
+        filtered_entries = cursor.fetchall()
+        entries_to_display = filtered_entries
+    else:
+        entries_to_display = daily_entries
+    
+    if not entries_to_display:
+        st.warning('No entries found for your search criteria.')
+    else:
+        table_data = []
+        for entry in entries_to_display:
+            entry_date = entry[3].strftime("%d %b %y")
+            entry_time = entry[4].total_seconds() if isinstance(entry[4], timedelta) else entry[4]
+            hours = int(entry_time // 3600)  
+            minutes = int((entry_time % 3600) // 60)  
+            seconds = int(entry_time % 60) 
+            entry_time_formatted = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+            table_data.append({
+                'Name': entry[1], 
+                'Date': entry_date, 
+                'Time': entry_time_formatted, 
+                'Phone': entry[2]
+            })
+        st.table(table_data)
 
 # Main navigation
 page = st.sidebar.selectbox(
