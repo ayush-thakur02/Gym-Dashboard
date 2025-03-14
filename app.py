@@ -449,7 +449,6 @@ def edit_payment():
             # Store selected payment details
             payment_name = selected_payment[1]
             payment_date = selected_payment[2]
-            payment_phone = selected_payment[3]
             payment_mode = selected_payment[4]
             payment_amount = selected_payment[5]
             
@@ -478,13 +477,13 @@ def edit_payment():
                 
                 if update_payment_button:
                     # Update payment in database
+                    # Update payment in database
                     update_query = """
                     UPDATE payments
                     SET Date = %s, Mode = %s, Money = %s
-                    WHERE Sno = %s
+                    WHERE ID = %s
                     """
                     cursor.execute(update_query, (edit_date, edit_mode, edit_amount, selected_payment_id))
-                    conn.commit()
                     
                     st.success("Payment updated successfully!")
                     
