@@ -520,17 +520,17 @@ def display_registered_users():
             if user[4] != None:
                 dob_date = user[4].strftime("%d %b %y")
             else:
-                dob_date = str(" ")
+                dob_date = ""
                 
             if user[2] == 0:
-                phone_number = str(" ")
+                phone_number = ""
             else:
-                phone_number = user[2]
+                phone_number = str(user[2])
                 
             if user[3] == 0:
-                emergency_phone_number = str(" ")
+                emergency_phone_number = ""
             else:
-                emergency_phone_number = user[3]
+                emergency_phone_number = str(user[3])
                 
             table_data.append({'Name': user[1], 'Phone': phone_number, 'Emergency': emergency_phone_number,
                               'DOB': dob_date, 'Address': user[5]})
